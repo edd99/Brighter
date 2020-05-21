@@ -66,7 +66,7 @@ namespace Paramore.Brighter.RMQ.Tests.MessageDispatch
             var rmqMessageConsumerFactory = new RmqMessageConsumerFactory(rmqConnection);
 
             var commandProcessor = CommandProcessorBuilder.With()
-                .Handlers(new HandlerConfiguration(new SubscriberRegistry(), new TinyIocHandlerFactory(new TinyIoCContainer())))
+                .Handlers(new HandlerConfiguration(new SubscriberRegistry(), new ServiceProviderHandlerFactory(new TinyIoCContainer())))
                 .Policies(new PolicyRegistry
                 {
                     { CommandProcessor.RETRYPOLICY, retryPolicy },

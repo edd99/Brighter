@@ -26,11 +26,11 @@ using System;
 
 namespace Paramore.Brighter.RMQ.Tests.TestDoubles
 {
-    internal class TinyIocHandlerFactory : IAmAHandlerFactory
+    internal class ServiceProviderHandlerFactory : IAmAHandlerFactory
     {
         private readonly TinyIoCContainer _container;
 
-        public TinyIocHandlerFactory(TinyIoCContainer container)
+        public ServiceProviderHandlerFactory(TinyIoCContainer container)
         {
             _container = container;
         }

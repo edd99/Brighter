@@ -27,7 +27,8 @@ using Paramore.Brighter.Core.Tests.CommandProcessors.TestDoubles;
 using Paramore.Brighter.Core.Tests.OnceOnly.TestDoubles;
 using Paramore.Brighter.Inbox.Exceptions;
 using Polly.Registry;
-using TinyIoC;
+using Microsoft.Extensions.DependencyInjection;
+using Paramore.Brighter.Extensions.DependencyInjection;
 using Xunit;
 
 namespace Paramore.Brighter.Core.Tests.OnceOnly
@@ -45,15 +46,15 @@ namespace Paramore.Brighter.Core.Tests.OnceOnly
             var registry = new SubscriberRegistry();
             registry.Register<MyCommand, MyStoredCommandToThrowHandler>();
 
-            var container = new TinyIoCContainer();
-            var handlerFactory = new TinyIocHandlerFactory(container);
-            
-            container.Register<IHandleRequests<MyCommand>, MyStoredCommandToThrowHandler>();
-            container.Register(_inbox);
+            var container = new ServiceCollection();
+            container.AddTransient<IHandleRequests<MyCommand>, MyStoredCommandToThrowHandler>();
+            container.AddSingleton(_inbox);
 
+            var handlerFactory = new ServiceProviderHandlerFactory(container.BuildServiceProvider());
+            
             _command = new MyCommand {Value = "My Test String"};
             
-            _commandProcessor = new CommandProcessor(registry, handlerFactory, new InMemoryRequestContextFactory(), new PolicyRegistry());
+            _commandProcessor = new CommandProcessor(registry, (IAmAHandlerFactory)handlerFactory, new InMemoryRequestContextFactory(), new PolicyRegistry());
         }
 
         [Fact]

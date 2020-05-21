@@ -27,7 +27,8 @@ using Paramore.Brighter.Core.Tests.ExceptionPolicy.TestDoubles;
 using Xunit;
 using Paramore.Brighter.Policies.Handlers;
 using Polly.Registry;
-using TinyIoC;
+using Microsoft.Extensions.DependencyInjection;
+using Paramore.Brighter.Extensions.DependencyInjection;
 
 namespace Paramore.Brighter.Core.Tests.ExceptionPolicy
 {
@@ -42,14 +43,15 @@ namespace Paramore.Brighter.Core.Tests.ExceptionPolicy
             registry.Register<MyCommand, MyFailsWithFallbackMultipleHandlers>();
             var policyRegistry = new PolicyRegistry();
 
-            var container = new TinyIoCContainer();
-            var handlerFactory = new TinyIocHandlerFactory(container);
-            container.Register<IHandleRequests<MyCommand>, MyFailsWithFallbackMultipleHandlers>().AsSingleton();
-            container.Register<IHandleRequests<MyCommand>, FallbackPolicyHandler<MyCommand>>().AsSingleton();
+            var container = new ServiceCollection();
+            container.AddSingleton<IHandleRequests<MyCommand>, MyFailsWithFallbackMultipleHandlers>();
+            container.AddSingleton<IHandleRequests<MyCommand>, FallbackPolicyHandler<MyCommand>>();
 
+            var handlerFactory = new ServiceProviderHandlerFactory(container.BuildServiceProvider());
+            
             MyFailsWithFallbackMultipleHandlers.ReceivedCommand = false;
 
-            _commandProcessor = new CommandProcessor(registry, handlerFactory, new InMemoryRequestContextFactory(), policyRegistry);
+            _commandProcessor = new CommandProcessor(registry, (IAmAHandlerFactory)handlerFactory, new InMemoryRequestContextFactory(), policyRegistry);
         }
 
         [Fact]

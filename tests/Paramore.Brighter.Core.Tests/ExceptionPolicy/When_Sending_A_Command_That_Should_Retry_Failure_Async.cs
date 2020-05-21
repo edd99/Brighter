@@ -8,7 +8,8 @@ using Xunit;
 using Paramore.Brighter.Policies.Handlers;
 using Polly;
 using Polly.Registry;
-using TinyIoC;
+using Microsoft.Extensions.DependencyInjection;
+using Paramore.Brighter.Extensions.DependencyInjection;
 
 namespace Paramore.Brighter.Core.Tests.ExceptionPolicy
 {
@@ -23,10 +24,11 @@ namespace Paramore.Brighter.Core.Tests.ExceptionPolicy
             var registry = new SubscriberRegistry();
             registry.RegisterAsync<MyCommand, MyFailsWithFallbackDivideByZeroHandlerAsync>();
 
-            var container = new TinyIoCContainer();
-            var handlerFactory = new TinyIocHandlerFactoryAsync(container);
-            container.Register<IHandleRequestsAsync<MyCommand>, MyFailsWithFallbackDivideByZeroHandlerAsync>().AsSingleton();
-            container.Register<IHandleRequestsAsync<MyCommand>, ExceptionPolicyHandlerAsync<MyCommand>>().AsSingleton();
+            var container = new ServiceCollection();
+            container.AddSingleton<IHandleRequestsAsync<MyCommand>, MyFailsWithFallbackDivideByZeroHandlerAsync>();
+            container.AddSingleton<IHandleRequestsAsync<MyCommand>, ExceptionPolicyHandlerAsync<MyCommand>>();
+            
+            var handlerFactory = new ServiceProviderHandlerFactory(container.BuildServiceProvider());
 
             var policyRegistry = new PolicyRegistry();
 
@@ -45,7 +47,7 @@ namespace Paramore.Brighter.Core.Tests.ExceptionPolicy
 
             MyFailsWithFallbackDivideByZeroHandlerAsync.ReceivedCommand = false;
 
-            _commandProcessor = new CommandProcessor(registry, handlerFactory, new InMemoryRequestContextFactory(), policyRegistry);
+            _commandProcessor = new CommandProcessor(registry, (IAmAHandlerFactoryAsync)handlerFactory, new InMemoryRequestContextFactory(), policyRegistry);
         }
 
         //We have to catch the final exception that bubbles out after retry

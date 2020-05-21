@@ -65,7 +65,7 @@ namespace Paramore.Brighter.RMQ.Tests.MessageDispatch
             var rmqMessageConsumerFactory = new RmqMessageConsumerFactory(connection);
 
             var commandProcessor = CommandProcessorBuilder.With()
-                .Handlers(new HandlerConfiguration(new SubscriberRegistry(), new TinyIocHandlerFactory(new TinyIoCContainer())))
+                .Handlers(new HandlerConfiguration(new SubscriberRegistry(), new ServiceProviderHandlerFactory(new TinyIoCContainer())))
                 .Policies(policyRegistry)
                 .NoTaskQueues()
                 .RequestContextFactory(new InMemoryRequestContextFactory())

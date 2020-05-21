@@ -28,7 +28,8 @@ using Paramore.Brighter.Core.Tests.CommandProcessors.TestDoubles;
 using Paramore.Brighter.Core.Tests.FeatureSwitch.TestDoubles;
 using Paramore.Brighter.FeatureSwitch;
 using Polly.Registry;
-using TinyIoC;
+using Microsoft.Extensions.DependencyInjection;
+using Paramore.Brighter.Extensions.DependencyInjection;
 using Xunit;
 
 namespace Paramore.Brighter.Core.Tests.FeatureSwitch
@@ -38,7 +39,7 @@ namespace Paramore.Brighter.Core.Tests.FeatureSwitch
     {
         private readonly MyCommand _myCommand = new MyCommand();
         private readonly SubscriberRegistry _registry;
-        private readonly TinyIocHandlerFactory _handlerFactory;
+        private readonly ServiceProviderHandlerFactory _handlerFactory;
         private readonly IAmAFeatureSwitchRegistry _featureSwitchRegistry;
 
         private CommandProcessor _commandProcessor;        
@@ -48,10 +49,11 @@ namespace Paramore.Brighter.Core.Tests.FeatureSwitch
             _registry = new SubscriberRegistry();
             _registry.Register<MyCommand, MyFeatureSwitchedConfigHandler>();
 
-            var container = new TinyIoCContainer();
-            _handlerFactory = new TinyIocHandlerFactory(container);
+            var container = new ServiceCollection();
+            container.AddTransient<IHandleRequests<MyCommand>, MyFeatureSwitchedConfigHandler>();
 
-            container.Register<IHandleRequests<MyCommand>, MyFeatureSwitchedConfigHandler>();  
+            _handlerFactory = new ServiceProviderHandlerFactory(container.BuildServiceProvider());
+
             
             _featureSwitchRegistry = new FakeConfigRegistry();
         }
@@ -62,7 +64,7 @@ namespace Paramore.Brighter.Core.Tests.FeatureSwitch
             _featureSwitchRegistry.MissingConfigStrategy = MissingConfigStrategy.SilentOn;
 
             _commandProcessor = new CommandProcessor(_registry, 
-                                                     _handlerFactory, 
+                                                     (IAmAHandlerFactory)_handlerFactory, 
                                                      new InMemoryRequestContextFactory(), 
                                                      new PolicyRegistry(),
                                                      _featureSwitchRegistry);
